@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Comparador educativo de rendimientos netos de Afores por Siefore Generacional." />
+  <title>ComparaMiAfore</title>
+  <style>
+    :root {
+      --bg: #050712;
+      --panel: rgba(16, 21, 42, 0.78);
+      --panel-2: rgba(24, 31, 60, 0.9);
+      --text: #f4f7ff;
+      --muted: #98a4c8;
+      --cyan: #00e5ff;
+      --green: #5cff72;
+      --orange: #ff9f2f;
+      --red: #ff4d67;
+      --line: rgba(154, 176, 255, 0.2);
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(0, 229, 255, 0.13), transparent 28%),
+        radial-gradient(circle at 85% 15%, rgba(92, 255, 114, 0.09), transparent 25%),
+        radial-gradient(circle at 50% 100%, rgba(147, 51, 234, 0.14), transparent 36%),
+        var(--bg);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: linear-gradient(to bottom, black, transparent 85%);
+    }
+
+    a { color: var(--cyan); }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .shell { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 34px 0 64px; }
+    .hero { text-align: center; padding: 54px 12px 34px; }
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 13px;
+      border: 1px solid rgba(0, 229, 255, .35);
+      border-radius: 999px;
+      color: var(--cyan);
+      background: rgba(0, 229, 255, .07);
+      font-size: .78rem;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 18px 0 12px; font-size: clamp(2.4rem, 7vw, 5.5rem); line-height: .95; letter-spacing: -.055em; }
+    h1 span { color: var(--green); text-shadow: 0 0 24px rgba(92,255,114,.38); }
+    .hero p { max-width: 760px; margin: 0 auto; color: var(--muted); font-size: clamp(1rem, 2.4vw, 1.18rem); line-height: 1.7; }
+
+    .notice {
+      margin: 0 auto 22px;
+      max-width: 980px;
+      border: 1px solid rgba(255,159,47,.38);
+      background: rgba(255,159,47,.08);
+      color: #ffd3a2;
+      border-radius: 16px;
+      padding: 14px 16px;
+      line-height: 1.5;
+      font-size: .9rem;
+    }
+
+    .card {
+      position: relative;
+      background: linear-gradient(145deg, rgba(18,24,48,.92), rgba(9,13,29,.8));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(120deg, rgba(255,255,255,.045), transparent 24%);
+    }
+    .step { padding: clamp(22px, 4vw, 36px); margin-bottom: 20px; }
+    .step-head { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 24px; }
+    .step-num {
+      flex: 0 0 auto;
+      width: 38px; height: 38px;
+      display: grid; place-items: center;
+      border-radius: 12px;
+      color: #00120a;
+      background: var(--green);
+      box-shadow: 0 0 22px rgba(92,255,114,.36);
+      font-weight: 900;
+    }
+    .step h2 { margin: 0; font-size: clamp(1.25rem, 3vw, 1.75rem); }
+    .step-head p { margin: 5px 0 0; color: var(--muted); line-height: 1.5; }
+
+    .afore-grid, .results-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .afore-btn {
+      position: relative;
+      min-height: 70px;
+      border: 1px solid rgba(152,164,200,.2);
+      border-radius: 16px;
+      color: #cbd4ee;
+      background: rgba(255,255,255,.035);
+      transition: .22s ease;
+      font-weight: 750;
+      padding: 12px;
+    }
+    .afore-btn:hover { transform: translateY(-2px); border-color: rgba(0,229,255,.55); color: #fff; }
+    .afore-btn.selected {
+      color: #031006;
+      border-color: var(--green);
+      background: var(--green);
+      box-shadow: 0 0 26px rgba(92,255,114,.42);
+    }
+
+    .helper { margin-top: 18px; color: var(--muted); font-size: .92rem; }
+    .helper a { text-decoration: none; border-bottom: 1px dashed currentColor; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    label { display: block; color: #cbd4ee; font-size: .9rem; margin-bottom: 8px; font-weight: 700; }
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(152,164,200,.25);
+      border-radius: 14px;
+      color: var(--text);
+      background: rgba(2,5,16,.72);
+      padding: 14px 15px;
+      outline: none;
+      transition: .2s ease;
+    }
+    input:focus, select:focus { border-color: var(--cyan); box-shadow: 0 0 0 4px rgba(0,229,255,.08); }
+    select option { background: #0b1022; }
+
+    .inline-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .toggle {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 11px 13px;
+      border: 1px solid rgba(152,164,200,.2);
+      border-radius: 14px;
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+    }
+    .toggle input { width: 18px; height: 18px; accent-color: var(--green); }
+
+    .primary {
+      width: 100%;
+      min-height: 56px;
+      border: 0;
+      border-radius: 16px;
+      color: #021007;
+      background: linear-gradient(90deg, var(--green), #b4ff4d);
+      box-shadow: 0 0 28px rgba(92,255,114,.24);
+      font-weight: 900;
+      letter-spacing: .02em;
+      transition: .2s ease;
+    }
+    .primary:hover { transform: translateY(-2px); box-shadow: 0 0 38px rgba(92,255,114,.36); }
+
+    #dashboard { display: none; }
+    #dashboard.visible { display: block; animation: rise .45s ease both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .performance-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 20px;
+      padding: 20px 24px;
+      border-radius: 20px;
+      border: 1px solid rgba(92,255,114,.62);
+      background: linear-gradient(90deg, rgba(92,255,114,.15), rgba(0,229,255,.08));
+      box-shadow: 0 0 34px rgba(92,255,114,.14);
+    }
+    .performance-banner.opportunity {
+      border-color: rgba(92,255,114,.62);
+      background: linear-gradient(90deg, rgba(92,255,114,.15), rgba(0,229,255,.08));
+      box-shadow: 0 0 34px rgba(92,255,114,.14);
+    }
+    .performance-banner .banner-copy { line-height: 1.45; }
+    .performance-banner .banner-copy strong { display: block; font-size: clamp(1.15rem, 3vw, 1.55rem); margin-bottom: 3px; }
+    .performance-banner .banner-copy span { color: #d7def4; }
+    .performance-banner .banner-rate { flex: 0 0 auto; text-align: right; }
+    .performance-banner .banner-rate b { display: block; color: var(--green); font-size: clamp(1.55rem, 4vw, 2.35rem); }
+    .performance-banner.opportunity .banner-rate b { color: var(--green); }
+    .performance-banner .banner-rate small { color: var(--muted); }
+
+    .summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+    .loss-block { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,77,103,.24); }
+    .loss-block span { display: block; color: #ffc0ca; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+    .loss-block strong { display: block; margin-top: 3px; color: var(--red) !important; font-size: clamp(1rem, 2.2vw, 1.45rem) !important; }
+    .metric { padding: 20px; }
+    .metric small { color: var(--muted); display: block; margin-bottom: 8px; }
+    .metric strong { font-size: clamp(1.25rem, 3vw, 2rem); }
+    .metric .positive { color: var(--green); }
+    .summary-row.needs-improvement .metric {
+      border-color: rgba(255,77,103,.58);
+      box-shadow: inset 0 0 28px rgba(255,77,103,.055), var(--shadow);
+    }
+    .summary-row.needs-improvement .metric strong,
+    .summary-row.needs-improvement .metric .positive,
+    .summary-row.needs-improvement .selected-irn {
+      color: var(--red);
+    }
+    .summary-row.needs-improvement .selected-irn {
+      border-color: rgba(255,77,103,.58);
+      background: rgba(255,77,103,.08);
+      box-shadow: inset 0 0 20px rgba(255,77,103,.06), 0 0 18px rgba(255,77,103,.10);
+    }
+    .selected-afore-name { display: block; margin-bottom: 10px; }
+    .selected-irn {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 7px;
+      padding: 8px 12px;
+      border: 1px solid rgba(92,255,114,.58);
+      border-radius: 13px;
+      color: var(--green);
+      background: rgba(92,255,114,.08);
+      box-shadow: inset 0 0 20px rgba(92,255,114,.06), 0 0 18px rgba(92,255,114,.10);
+      font-size: clamp(1.45rem, 3vw, 2.15rem) !important;
+    }
+    .selected-irn em { color: var(--muted); font-size: .72rem; font-style: normal; font-weight: 700; }
+
+    .result-card {
+      min-height: 156px;
+      border: 1px solid transparent;
+      border-radius: 18px;
+      padding: 18px 14px;
+      background: rgba(255,255,255,.035);
+      color: var(--text);
+      text-align: left;
+      transition: .2s ease;
+    }
+    .result-card:hover { transform: translateY(-3px); }
+    .result-card.selected { outline: 2px solid var(--cyan); outline-offset: 2px; }
+    .result-card.best { border-color: rgba(92,255,114,.72); box-shadow: inset 0 0 26px rgba(92,255,114,.08); }
+    .result-card.mid { border-color: rgba(255,159,47,.58); }
+    .result-card.low { border-color: rgba(255,77,103,.5); }
+    .rank { font-size: .73rem; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+    .result-card h3 { margin: 8px 0 14px; font-size: 1rem; }
+    .result-card .amount { font-size: 1.18rem; font-weight: 900; white-space: nowrap; }
+    .result-card.best .amount { color: var(--green); text-shadow: 0 0 15px rgba(92,255,114,.3); }
+    .result-card.mid .amount { color: var(--orange); }
+    .result-card.low .amount { color: var(--red); }
+    .irn { display: block; margin-top: 8px; color: var(--muted); font-size: .82rem; }
+    .loss { display: block; margin-top: 10px; padding-top: 9px; border-top: 1px solid rgba(152,164,200,.15); color: var(--muted); font-size: .76rem; font-weight: 800; line-height: 1.35; text-transform: uppercase; letter-spacing: .035em; }
+    .result-card.best .loss { color: var(--green); }
+    .result-card.mid .loss { color: var(--orange); }
+    .result-card.low .loss { color: var(--red); }
+    .retirement-card .amount { font-size: 1.06rem; }
+    .effective-balance {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: .73rem;
+      font-weight: 850;
+      line-height: 1.35;
+      text-transform: uppercase;
+      letter-spacing: .035em;
+    }
+    .effective-balance strong {
+      display: block;
+      margin-top: 3px;
+      font-size: .92rem;
+      color: currentColor;
+    }
+    .result-card.best .effective-balance { color: var(--green); }
+    .result-card.mid .effective-balance { color: var(--orange); }
+    .result-card.low .effective-balance { color: var(--red); }
+
+    .chart-wrap { height: 430px; padding: 18px; }
+    .chart-controls { display: flex; justify-content: space-between; align-items: end; gap: 18px; flex-wrap: wrap; margin-bottom: 16px; }
+    .chart-controls > div { flex: 1 1 260px; }
+    canvas { max-height: 350px; }
+
+    .support-section {
+      display: none;
+      margin-top: 20px;
+      padding: clamp(24px, 4vw, 38px);
+      text-align: center;
+    }
+    .support-section.visible {
+      display: block;
+      animation: rise .45s ease both;
+    }
+    .support-section h2 { margin: 0 0 10px; font-size: clamp(1.55rem, 4vw, 2.35rem); }
+    .support-section > p { max-width: 760px; margin: 0 auto 24px; color: var(--muted); line-height: 1.65; }
+    .thanks-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+    .thanks-option {
+      border: 1px solid rgba(92,255,114,.35);
+      border-radius: 18px;
+      padding: 20px;
+      background: rgba(92,255,114,.045);
+      text-align: left;
+    }
+    .thanks-option h3 { margin: 0 0 8px; font-size: 1.05rem; }
+    .thanks-option .thanks-amount {
+      display: block;
+      margin: 10px 0 16px;
+      color: var(--green);
+      font-size: clamp(1.45rem, 3vw, 2rem);
+      font-weight: 900;
+    }
+    .thanks-option input { margin-bottom: 12px; }
+    .thanks-button {
+      display: inline-flex;
+      width: 100%;
+      min-height: 48px;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 13px;
+      color: #031006;
+      background: linear-gradient(90deg, var(--green), #b4ff4d);
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow: 0 0 22px rgba(92,255,114,.16);
+    }
+    .thanks-button:hover { transform: translateY(-2px); }
+    .support-note { margin-top: 18px !important; font-size: .82rem; }
+    .support-note code { color: #dfe6ff; }
+
+
+    .independence-policy {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border: 1px solid rgba(0,229,255,.34);
+      border-radius: 16px;
+      background: rgba(0,229,255,.055);
+      color: #dfe6ff;
+      line-height: 1.6;
+      text-align: center;
+      box-shadow: inset 0 0 22px rgba(0,229,255,.035);
+    }
+    .independence-policy strong {
+      color: var(--cyan);
+    }
+
+    .fine-print { color: var(--muted); line-height: 1.6; font-size: .82rem; margin-top: 16px; }
+    footer { text-align: center; color: #7781a4; font-size: .8rem; padding-top: 26px; }
+
+    @media (max-width: 900px) {
+      .afore-grid, .results-grid { grid-template-columns: repeat(2, 1fr); }
+      .summary-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 580px) {
+      .shell { width: min(100% - 18px, 1180px); padding-top: 14px; }
+      .hero { padding-top: 34px; }
+      .form-grid, .form-grid.three, .summary-row { grid-template-columns: 1fr; }
+      .performance-banner { align-items: flex-start; flex-direction: column; padding: 18px; }
+      .performance-banner .banner-rate { text-align: left; }
+      .afore-grid, .results-grid { grid-template-columns: 1fr 1fr; gap: 9px; }
+      .afore-btn { min-height: 62px; font-size: .86rem; }
+      .result-card { min-height: 145px; padding: 15px 11px; }
+      .result-card .amount { font-size: .96rem; }
+      .chart-wrap { height: 390px; padding: 10px; }
+      .thanks-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <span class="eyebrow">Educación financiera · México</span>
+      <h1>Compara<span>MiAfore</span></h1>
+      <p>Descubre, de forma sencilla, cómo se compara el rendimiento neto de tu Afore con las demás y visualiza una proyección orientativa de tu ahorro.</p>
+    </header>
+
+    <div class="notice"><strong>Prototipo educativo:</strong> El IRN representa desempeño histórico y no garantiza rendimientos futuros. Indicadores oficiales vigentes de CONSAR al ${Cierre}.</div>
+
+    <section class="card step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div>
+          <h2>Selecciona tu Afore actual</h2>
+          <p>La opción elegida se iluminará en verde.</p>
+        </div>
+      </div>
+      <div class="afore-grid" id="aforeSelector"></div>
+      <p class="helper">¿No sabes cuál es tu Afore? <a href="https://www.aforeweb.com.mx/localiza-tu-afore" target="_blank" rel="noopener noreferrer">Localízala en AforeWeb ↗</a></p>
+    </section>
+
+    <section class="card step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div>
+          <h2>Indica tu año de nacimiento</h2>
+          <p>Asignaremos automáticamente la Siefore Generacional correspondiente; puedes modificarla manualmente.</p>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div>
+          <label for="birthYear">Año de nacimiento</label>
+          <input id="birthYear" type="number" min="1920" max="2015" placeholder="Ej. 1988" inputmode="numeric" />
+        </div>
+        <div>
+          <label for="sieforeSelect">Siefore Generacional</label>
+          <select id="sieforeSelect"></select>
+        </div>
+      </div>
+      <p class="helper">¿Qué son las Siefores Generacionales? <a href="https://www.gob.mx/consar/articulos/indicador-de-rendimiento-neto?idiom=es" target="_blank" rel="noopener noreferrer">CONSAR ↗</a></p>
+    </section>
+
+    <section class="card step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div>
+          <h2>Captura tu saldo total</h2>
+          <p>También puedes usar una simulación rápida de $100,000.</p>
+        </div>
+      </div>
+      <div class="form-grid three">
+        <div>
+          <label for="balance">Saldo total en tu cuenta Afore</label>
+          <input id="balance" type="number" min="0" step="1000" placeholder="Ej. 250000" inputmode="decimal" />
+        </div>
+        <div>
+          <label for="retirementAge">¿A qué edad piensas jubilarte?</label>
+          <select id="retirementAge">
+            <option value="60">60 años</option><option value="61">61 años</option><option value="62">62 años</option><option value="63">63 años</option><option value="64">64 años</option><option value="65" selected>65 años</option>
+          </select>
+        </div>
+        <div class="inline-controls">
+          <label class="toggle"><input id="simulation" type="checkbox" /> Usar simulación de $100,000</label>
+        </div>
+      </div>
+      <div style="margin-top:22px"><button class="primary" id="compareBtn">Comparar rendimientos</button></div>
+    </section>
+
+    <section id="dashboard">
+      <div class="summary-row" id="summaryRow"></div>
+      <div id="performanceBanner"></div>
+      <div class="summary-row" id="bestSummaryRow"></div>
+
+      <section class="card step">
+        <div class="step-head">
+          <div class="step-num">4</div>
+          <div>
+            <h2>Saldo estimado después de un año</h2>
+            <p>Ordenado de mayor a menor IRN. Pulsa cualquier tarjeta para cambiar la proyección.</p>
+          </div>
+        </div>
+        <div class="results-grid" id="resultsGrid"></div>
+        <p class="helper">¿Cómo me cambio de AFORE? <a href="https://www.gob.mx/consar/articulos/como-me-cambio-de-afore" target="_blank" rel="noopener noreferrer">CONSAR ↗</a></p>
+      </section>
+
+      <section class="card step">
+        <div class="step-head">
+          <div class="step-num">5</div>
+          <div><h2>Saldo estimado al momento de la jubilación</h2><p id="retirementSectionDescription">Comparación con interés compuesto hasta la edad seleccionada.</p></div>
+        </div>
+        <div class="results-grid" id="retirementResultsGrid"></div>
+      </section>
+
+      <section class="card step">
+        <div class="chart-controls">
+          <div>
+            <label for="chartAfore">Afore mostrada en la gráfica</label>
+            <select id="chartAfore"></select>
+          </div>
+          <div>
+            <label for="chartSiefore">Siefore usada en la gráfica</label>
+            <select id="chartSiefore"></select>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="growthChart"></canvas></div>
+        <p class="fine-print">La proyección supone que el IRN seleccionado se mantiene constante, se capitaliza una vez al año y no considera nuevas aportaciones, retiros, inflación, cambios de comisión, variaciones del mercado ni cambios regulatorios. Es únicamente una simulación ilustrativa.</p>
+      </section>
+    </section>
+
+    
+
+    <section class="card support-section" id="gracias">
+      <h2>¡Gracias por apoyar ComparaMiAfore!</h2>
+      <p>¿Te sirvió la manera de presentar esta información? Regálanos un “Gracias” para seguir actualizando y mejorando este proyecto.</p>
+      <div class="thanks-grid">
+        <article class="thanks-option">
+          <h3>Sí me sirvió, gracias</h3>
+          <span class="thanks-amount">$10 MXN</span>
+          <a class="thanks-button" href="#" data-donation="10">Enviar Gracias</a>
+        </article>
+        <article class="thanks-option">
+          <h3>Sí me sirvió, muchas gracias</h3>
+          <span class="thanks-amount">$50 MXN</span>
+          <a class="thanks-button" href="#" data-donation="50">Enviar Muchas Gracias</a>
+        </article>
+        <article class="thanks-option">
+          <h3>No manches, ¡ganaré mucho dinero!</h3>
+          <label for="customDonation">Super Gracias · importe en MXN</label>
+          <input id="customDonation" type="number" min="1" step="1" placeholder="Ej. 100" inputmode="decimal" />
+          <a class="thanks-button" href="#" id="customDonationBtn">Enviar Super Gracias</a>
+        </article>
+      </div>
+      <p class="support-note">Los botones están listos para conectarse a PayPal. Sustituye <code>PAYPAL_ME_USUARIO</code> en la zona de configuración del HTML por tu usuario real de PayPal.Me. No publiques datos bancarios personales directamente en el código.</p>
+      <div class="independence-policy" role="note" aria-label="Política de independencia">
+        <strong>Política de independencia:</strong>
+        Ningún pago, patrocinio o colaboración modifica los resultados, posiciones o cálculos del comparador.
+      </div>
+    </section>
+
+    <footer>ComparaMiAfore · Prototipo independiente, sin afiliación con CONSAR ni con las Afores.</footer>
+  </main>
+
+  <script>
+    /* ================================================================
+       ZONA PRINCIPAL DE ACTUALIZACIÓN DE DATOS
+       Sustituye los valores de este objeto con el IRN oficial vigente.
+       Los números son porcentajes anuales: 7.28 equivale a 7.28%.
+       El bloque SB0 conserva los datos del ejemplo proporcionado.
+       Los demás bloques son DEMOSTRATIVOS y deben validarse antes de uso.
+       ================================================================ */
+    const Cierre = "Cierre de Junio 2026";
+    
+    const RENDIMIENTOS_IRN = {
+      "SBI": {
+        "Profuturo": 9.55,
+        "SURA": 8.98,
+        "Inbursa": 8.79,
+        "XXI-Banorte": 9.11,
+        "Banamex": 8.02,
+        "Invercap": 8.41,
+        "Principal": 8.09,
+        "Azteca": 7.91,
+        "PensionISSSTE": 7.77,
+        "Coppel": 7.52
+      },
+      "SB-95-99": {
+        "Profuturo": 9.58,
+        "SURA": 9.04,
+        "Inbursa": 8.94,
+        "XXI-Banorte": 9.09,
+        "Banamex": 8.19,
+        "Invercap": 8.45,
+        "Principal": 7.85,
+        "Azteca": 7.88,
+        "PensionISSSTE": 7.75,
+        "Coppel": 7.46
+      },
+      "SB-90-94": {
+        "Profuturo": 9.53,
+        "SURA": 8.98,
+        "Inbursa": 8.90,
+        "XXI-Banorte": 8.87,
+        "Banamex": 8.28,
+        "Invercap": 8.58,
+        "Principal": 8.04,
+        "Azteca": 7.72,
+        "PensionISSSTE": 7.67,
+        "Coppel": 7.39
+      },
+      "SB-85-89": {
+        "Profuturo": 9.54,
+        "SURA": 8.94,
+        "Inbursa": 8.81,
+        "XXI-Banorte": 8.81,
+        "Banamex": 8.38,
+        "Invercap": 8.37,
+        "Principal": 8.05,
+        "Azteca": 7.67,
+        "PensionISSSTE": 7.41,
+        "Coppel": 7.32
+      },
+      "SB-80-84": {
+        "Profuturo": 9.38,
+        "SURA": 8.88,
+        "Inbursa": 8.80,
+        "XXI-Banorte": 8.67,
+        "Banamex": 8.22,
+        "Invercap": 8.35,
+        "Principal": 7.99,
+        "Azteca": 7.49,
+        "PensionISSSTE": 7.39,
+        "Coppel": 7.29
+      },
+      "SB-75-79": {
+        "Profuturo": 9.25,
+        "SURA": 8.74,
+        "Inbursa": 8.67,
+        "XXI-Banorte": 8.48,
+        "Banamex": 7.95,
+        "Invercap": 8.08,
+        "Principal": 8.06,
+        "Azteca": 7.46,
+        "PensionISSSTE": 7.37,
+        "Coppel": 7.17
+      },
+      "SB-70-74": {
+        "Profuturo": 8.95,
+        "SURA": 8.56,
+        "Inbursa": 8.33,
+        "XXI-Banorte": 8.32,
+        "Banamex": 7.85,
+        "Invercap": 7.88,
+        "Principal": 7.81,
+        "Azteca": 7.44,
+        "PensionISSSTE": 7.56,
+        "Coppel": 7.04
+      },
+      "SB-65-69": {
+        "Profuturo": 8.58,
+        "SURA": 8.30,
+        "Inbursa": 8.17,
+        "XXI-Banorte": 8.00,
+        "Banamex": 7.45,
+        "Invercap": 7.82,
+        "Principal": 7.60,
+        "Azteca": 7.45,
+        "PensionISSSTE": 7.74,
+        "Coppel": 7.05
+      },
+      "SB-60-64": {
+        "Profuturo": 8.03,
+        "SURA": 7.82,
+        "Inbursa": 7.97,
+        "XXI-Banorte": 7.00,
+        "Banamex": 6.89,
+        "Invercap": 7.27,
+        "Principal": 7.18,
+        "Azteca": 7.28,
+        "PensionISSSTE": 7.38,
+        "Coppel": 7.07
+      },
+      "SB0": {
+        "Profuturo": 7.28,
+        "SURA": 7.42,
+        "Inbursa": 7.72,
+        "XXI-Banorte": 7.35,
+        "Banamex": 6.61,
+        "Invercap": 7.69,
+        "Principal": 7.18,
+        "Azteca": 7.81,
+        "PensionISSSTE": 7.79,
+        "Coppel": 7.90
+      }
+    };
+
+    const AFORES = ["Profuturo", "SURA", "Inbursa", "XXI-Banorte", "Banamex", "Invercap", "Principal", "Azteca", "PensionISSSTE", "Coppel"];
+    const SIEFORES = [
+      { id: "SBI", label: "SBI · Nacidos a partir de 2000", min: 2000, max: 9999 },
+      { id: "SB-95-99", label: "SB-95-99 · Nacidos de 1995 a 1999", min: 1995, max: 1999 },
+      { id: "SB-90-94", label: "SB-90-94 · Nacidos de 1990 a 1994", min: 1990, max: 1994 },
+      { id: "SB-85-89", label: "SB-85-89 · Nacidos de 1985 a 1989", min: 1985, max: 1989 },
+      { id: "SB-80-84", label: "SB-80-84 · Nacidos de 1980 a 1984", min: 1980, max: 1984 },
+      { id: "SB-75-79", label: "SB-75-79 · Nacidos de 1975 a 1979", min: 1975, max: 1979 },
+      { id: "SB-70-74", label: "SB-70-74 · Nacidos de 1970 a 1974", min: 1970, max: 1974 },
+      { id: "SB-65-69", label: "SB-65-69 · Nacidos de 1965 a 1969", min: 1965, max: 1969 },
+      { id: "SB-60-64", label: "SB-60-64 · Nacidos de 1960 a 1964", min: 1960, max: 1964 },
+      { id: "SB0", label: "SB0 · Nacidos antes de 1960", min: 0, max: 1959 }
+    ];
+
+    const state = { selectedAfore: null, balance: 0, birthYear: null, retirementAge: 65, chart: null };
+    const $ = (id) => document.getElementById(id);
+    const money = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 2 });
+
+    /* CONFIGURACIÓN DE APOYOS
+       Sustituye PAYPAL_ME_USUARIO por tu usuario real de PayPal.Me.
+       Ejemplo: const PAYPAL_ME_USUARIO = "TuUsuario";
+    */
+    const PAYPAL_ME_USUARIO = "PAYPAL_ME_USUARIO";
+
+    function buildUI() {
+      $("aforeSelector").innerHTML = AFORES.map(name => `<button class="afore-btn" data-afore="${name}">${name}</button>`).join("");
+      const options = SIEFORES.map(s => `<option value="${s.id}">${s.label}</option>`).join("");
+      $("sieforeSelect").innerHTML = options;
+      $("chartSiefore").innerHTML = options;
+      $("chartAfore").innerHTML = AFORES.map(a => `<option value="${a}">${a}</option>`).join("");
+
+      document.querySelectorAll(".afore-btn").forEach(btn => btn.addEventListener("click", () => selectAfore(btn.dataset.afore)));
+      $("birthYear").addEventListener("input", syncSieforeFromBirthYear);
+      $("simulation").addEventListener("change", toggleSimulation);
+      $("compareBtn").addEventListener("click", compare);
+      $("chartAfore").addEventListener("change", updateChart);
+      $("chartSiefore").addEventListener("change", updateChart);
+      $("retirementAge").addEventListener("change", () => {
+        if (!$("dashboard").classList.contains("visible")) return;
+        state.retirementAge = Number($("retirementAge").value);
+        const siefore = $("sieforeSelect").value;
+        renderSummary(siefore); renderBestSummary(siefore); renderRetirementResults(siefore); updateChart();
+      });
+
+      document.querySelectorAll("[data-donation]").forEach(link => link.addEventListener("click", event => {
+        event.preventDefault();
+        openDonation(Number(link.dataset.donation));
+      }));
+      $("customDonationBtn").addEventListener("click", event => {
+        event.preventDefault();
+        const amount = Number($("customDonation").value);
+        if (!Number.isFinite(amount) || amount <= 0) return alert("Captura un importe válido para tu Super Gracias.");
+        openDonation(amount);
+      });
+    }
+
+    function openDonation(amount) {
+      if (PAYPAL_ME_USUARIO === "PAYPAL_ME_USUARIO") {
+        return alert("Antes de recibir apoyos, reemplaza PAYPAL_ME_USUARIO en el HTML por tu usuario real de PayPal.Me.");
+      }
+      const roundedAmount = Math.round(amount * 100) / 100;
+      const url = `https://www.paypal.com/paypalme/${encodeURIComponent(PAYPAL_ME_USUARIO)}/${roundedAmount}MXN`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+
+    function selectAfore(name) {
+      state.selectedAfore = name;
+      document.querySelectorAll(".afore-btn").forEach(btn => btn.classList.toggle("selected", btn.dataset.afore === name));
+    }
+
+    function syncSieforeFromBirthYear() {
+      const year = Number($("birthYear").value);
+      if (!Number.isFinite(year)) return;
+      const match = SIEFORES.find(s => year >= s.min && year <= s.max);
+      if (match) $("sieforeSelect").value = match.id;
+    }
+
+    function toggleSimulation() {
+      if ($("simulation").checked) {
+        $("balance").value = 100000;
+        $("balance").disabled = true;
+      } else {
+        $("balance").disabled = false;
+      }
+    }
+
+    function compare() {
+      const birthYear = Number($("birthYear").value);
+      const balance = Number($("balance").value);
+      if (!state.selectedAfore) return alert("Selecciona tu Afore actual.");
+      if (!Number.isInteger(birthYear) || birthYear < 1920 || birthYear > new Date().getFullYear()) return alert("Captura un año de nacimiento válido.");
+      if (!Number.isFinite(balance) || balance <= 0) return alert("Captura un saldo mayor a cero o activa la simulación.");
+
+      const retirementAge = Number($("retirementAge").value);
+      const currentAge = Math.max(0, new Date().getFullYear() - birthYear);
+      if (!Number.isInteger(retirementAge) || retirementAge < 60 || retirementAge > 65) return alert("Selecciona una edad de jubilación válida.");
+      if (currentAge > retirementAge) return alert(`La edad de jubilación seleccionada (${retirementAge}) debe ser mayor o igual a tu edad actual aproximada (${currentAge}).`);
+      state.balance = balance; state.birthYear = birthYear; state.retirementAge = retirementAge;
+      const siefore = $("sieforeSelect").value;
+      $("chartAfore").value = state.selectedAfore; $("chartSiefore").value = siefore;
+      renderPerformanceBanner(siefore); renderSummary(siefore); renderBestSummary(siefore); renderResults(siefore); renderRetirementResults(siefore);
+      $("dashboard").classList.add("visible");
+      $("gracias").classList.add("visible");
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => updateChart());
+      });
+      $("dashboard").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function renderPerformanceBanner(siefore) {
+      const table = RENDIMIENTOS_IRN[siefore];
+      const selectedIrn = table[state.selectedAfore];
+      const best = Object.entries(table).sort((a,b) => b[1] - a[1])[0];
+      const isBest = state.selectedAfore === best[0];
+
+      $("performanceBanner").innerHTML = `
+        <div class="performance-banner ${isBest ? "" : "opportunity"}">
+          <div class="banner-copy">
+            <strong>${isBest ? "¡Felicidades!" : "¡Wow! Puedes mejorar los rendimientos de tu dinero"}</strong>
+            <span>${isBest
+              ? "Te encuentras en la opción de mejores rendimientos para esta Siefore."
+              : `La opción con mayor IRN es ${best[0]}. Échale un ojo, no pierdas la oportunidad.`}
+            </span>
+          </div>
+          <div class="banner-rate">
+            <b>${isBest ? state.selectedAfore : best[0]} · ${(isBest ? selectedIrn : best[1]).toFixed(2)}%</b>
+            <small>IRN en ${siefore}</small>
+          </div>
+        </div>`;
+    }
+
+    function renderSummary(siefore) {
+      const table = RENDIMIENTOS_IRN[siefore];
+      const irn = table[state.selectedAfore];
+      const best = Object.entries(table).sort((a,b) => b[1] - a[1])[0];
+      const isBest = state.selectedAfore === best[0];
+      const oneYear = state.balance * (1 + irn / 100);
+      const bestOneYear = state.balance * (1 + best[1] / 100);
+      const currentAge = Math.max(0, new Date().getFullYear() - state.birthYear);
+      const years = Math.max(0, state.retirementAge - currentAge);
+      const projection = state.balance * Math.pow(1 + irn / 100, years);
+      const bestProjection = state.balance * Math.pow(1 + best[1] / 100, years);
+      const oneYearLoss = Math.max(0, bestOneYear - oneYear);
+      const retirementLoss = Math.max(0, bestProjection - projection);
+      $("summaryRow").classList.toggle("needs-improvement", !isBest);
+      $("summaryRow").innerHTML = `
+        <article class="card metric"><small>Tu Afore seleccionada</small><strong class="selected-afore-name">${state.selectedAfore}</strong><strong class="selected-irn">${irn.toFixed(2)}% <em>IRN</em></strong></article>
+        <article class="card metric"><small>Siefore analizada</small><strong>${siefore}</strong></article>
+        <article class="card metric"><small>Saldo estimado a 1 año</small><strong class="positive">${money.format(oneYear)}</strong><div class="loss-block"><span>${isBest ? "Diferencia contra el lugar 1" : "Estás dejando de ganar"}</span><strong>${money.format(oneYearLoss)}</strong></div></article>
+        <article class="card metric"><small>Proyección hasta los ${state.retirementAge} años</small><strong class="positive">${money.format(projection)}</strong><div class="loss-block"><span>${isBest ? "Diferencia contra el lugar 1" : "Estás dejando de ganar"}</span><strong>${money.format(retirementLoss)}</strong></div></article>`;
+    }
+
+    function renderBestSummary(siefore) {
+      const best = Object.entries(RENDIMIENTOS_IRN[siefore]).sort((a,b) => b[1] - a[1])[0];
+      const currentAge = Math.max(0, new Date().getFullYear() - state.birthYear);
+      const years = Math.max(0, state.retirementAge - currentAge);
+      const oneYear = state.balance * (1 + best[1] / 100);
+      const projection = state.balance * Math.pow(1 + best[1] / 100, years);
+      $("bestSummaryRow").innerHTML = `
+        <article class="card metric"><small>Tu mejor opción de Afore</small><strong class="selected-afore-name">${best[0]}</strong><strong class="selected-irn">${best[1].toFixed(2)}% <em>IRN</em></strong></article>
+        <article class="card metric"><small>Siefore analizada</small><strong>${siefore}</strong></article>
+        <article class="card metric"><small>Saldo estimado a 1 año</small><strong class="positive">${money.format(oneYear)}</strong></article>
+        <article class="card metric"><small>Proyección hasta los ${state.retirementAge} años</small><strong class="positive">${money.format(projection)}</strong></article>`;
+    }
+
+    function renderResults(siefore) {
+      const sorted = Object.entries(RENDIMIENTOS_IRN[siefore]).sort((a,b) => b[1] - a[1]);
+      const bestAmount = state.balance * (1 + sorted[0][1] / 100);
+      $("resultsGrid").innerHTML = sorted.map(([name, irn], i) => {
+        const level = i === 0 ? "best" : i <= 4 ? "mid" : "low";
+        const amount = state.balance * (1 + irn / 100);
+        const loss = Math.max(0, bestAmount - amount);
+        return `<button class="result-card ${level} ${name === state.selectedAfore ? "selected" : ""}" data-result-afore="${name}"><span class="rank">Lugar ${i + 1}</span><h3>${name}</h3><span class="amount">${money.format(amount)}</span><span class="irn">IRN: ${irn.toFixed(2)}%</span><span class="loss">Pérdida ${money.format(loss)}</span></button>`;
+      }).join("");
+      document.querySelectorAll("[data-result-afore]").forEach(btn => btn.addEventListener("click", () => { $("chartAfore").value = btn.dataset.resultAfore; updateChart(); document.querySelectorAll(".result-card").forEach(c => c.classList.toggle("selected", c === btn)); }));
+    }
+
+    function renderRetirementResults(siefore) {
+      const currentAge = Math.max(0, new Date().getFullYear() - state.birthYear);
+      const years = Math.max(0, state.retirementAge - currentAge);
+      const sorted = Object.entries(RENDIMIENTOS_IRN[siefore]).map(([name, irn]) => [name, irn, state.balance * Math.pow(1 + irn / 100, years)]).sort((a,b) => b[2] - a[2]);
+      const bestAmount = sorted[0][2];
+      $("retirementSectionDescription").textContent = `Proyección con interés compuesto durante ${years} año${years === 1 ? "" : "s"}, desde tus ${currentAge} hasta los ${state.retirementAge} años de edad. El saldo efectivo mostrado corresponde al 36% del importe total proyectado. IRN al ${Cierre} de acuerdo a datos oficiales de la CONSAR.`;
+      $("retirementResultsGrid").innerHTML = sorted.map(([name, irn, amount], i) => {
+        const level = i === 0 ? "best" : i <= 4 ? "mid" : "low";
+        const loss = Math.max(0, bestAmount - amount);
+        const effectiveBalance = amount * 0.36;
+        return `<button class="result-card retirement-card ${level} ${name === state.selectedAfore ? "selected" : ""}" data-retirement-afore="${name}">
+          <span class="rank">Lugar ${i + 1}</span>
+          <h3>${name}</h3>
+          <span class="amount">${money.format(amount)}</span>
+          <span class="irn">IRN: ${irn.toFixed(2)}%</span>
+          <span class="loss">Pérdida ${money.format(loss)}</span>
+          <span class="effective-balance">Efectivo ${money.format(effectiveBalance)}</span>
+        </button>`;
+      }).join("");
+      document.querySelectorAll("[data-retirement-afore]").forEach(btn => btn.addEventListener("click", () => { $("chartAfore").value = btn.dataset.retirementAfore; updateChart(); document.querySelectorAll(".result-card").forEach(c => c.classList.toggle("selected", c === btn)); }));
+    }
+
+    function updateChart() {
+      if (!state.balance || !state.birthYear) return;
+      const afore = $("chartAfore").value;
+      const siefore = $("chartSiefore").value;
+      const rate = RENDIMIENTOS_IRN[siefore][afore] / 100;
+      const currentAge = Math.max(0, new Date().getFullYear() - state.birthYear);
+      const yearsToRetirement = Math.max(0, state.retirementAge - currentAge);
+      const years = Array.from({ length: yearsToRetirement + 1 }, (_, i) => i);
+      const values = years.map(y => state.balance * Math.pow(1 + rate, y));
+      drawGrowthChart($("growthChart"), values, currentAge, afore, siefore, rate);
+    }
+
+    function drawGrowthChart(canvas, values, currentAge, afore, siefore, rate) {
+      const parent = canvas.parentElement;
+      const dpr = window.devicePixelRatio || 1;
+      const styles = getComputedStyle(parent);
+      const horizontalPadding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+      const verticalPadding = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+      const parentRect = parent.getBoundingClientRect();
+      const width = Math.max(300, parentRect.width - horizontalPadding);
+      const height = Math.max(280, parentRect.height - verticalPadding);
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+
+      const pad = { top: 52, right: 22, bottom: 42, left: width < 520 ? 64 : 92 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+      const max = Math.max(...values, 1);
+      const min = Math.min(...values, 0);
+      const range = Math.max(1, max - min);
+      const x = i => pad.left + (values.length === 1 ? plotW / 2 : i * plotW / (values.length - 1));
+      const y = v => pad.top + plotH - ((v - min) / range) * plotH;
+
+      ctx.font = "700 13px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "#dfe6ff";
+      ctx.fillText(`${afore} · ${siefore} · IRN ${(rate * 100).toFixed(2)}%`, pad.left, 24);
+      ctx.font = "12px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "#98a4c8";
+      ctx.fillText(`Proyección hasta los ${state.retirementAge} años: ${money.format(values.at(-1))}`, pad.left, 43);
+
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(152,164,200,.14)";
+      ctx.fillStyle = "#98a4c8";
+      ctx.font = "11px Inter, system-ui, sans-serif";
+      for (let i = 0; i <= 4; i++) {
+        const gy = pad.top + plotH * i / 4;
+        const val = max - range * i / 4;
+        ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(width - pad.right, gy); ctx.stroke();
+        const compact = new Intl.NumberFormat("es-MX", { notation: "compact", style: "currency", currency: "MXN", maximumFractionDigits: 1 }).format(val);
+        ctx.fillText(compact, 4, gy + 4);
+      }
+
+      const tickCount = Math.min(6, values.length);
+      for (let i = 0; i < tickCount; i++) {
+        const idx = tickCount === 1 ? 0 : Math.round(i * (values.length - 1) / (tickCount - 1));
+        const gx = x(idx);
+        ctx.fillText(`${currentAge + idx} años`, Math.max(pad.left, gx - 20), height - 14);
+      }
+
+      const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+      gradient.addColorStop(0, "rgba(92,255,114,.28)");
+      gradient.addColorStop(1, "rgba(92,255,114,0)");
+      ctx.beginPath();
+      values.forEach((v, i) => i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v)));
+      ctx.lineTo(x(values.length - 1), pad.top + plotH);
+      ctx.lineTo(x(0), pad.top + plotH);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      ctx.beginPath();
+      values.forEach((v, i) => i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v)));
+      ctx.strokeStyle = "#5cff72";
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "rgba(92,255,114,.55)";
+      ctx.shadowBlur = 12;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      const lastX = x(values.length - 1), lastY = y(values.at(-1));
+      ctx.beginPath(); ctx.arc(lastX, lastY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = "#5cff72"; ctx.fill();
+    }
+
+    window.addEventListener("resize", () => {
+      clearTimeout(window.__chartResizeTimer);
+      window.__chartResizeTimer = setTimeout(updateChart, 120);
+    });
+
+    const chartResizeObserver = new ResizeObserver(() => {
+      if (!$("dashboard").classList.contains("visible")) return;
+      clearTimeout(window.__chartObserverTimer);
+      window.__chartObserverTimer = setTimeout(updateChart, 80);
+    });
+    chartResizeObserver.observe($("growthChart").parentElement);
+
+    buildUI();
+  </script>
+</body>
+</html>
