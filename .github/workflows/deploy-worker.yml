@@ -1,5 +1,6 @@
 # Deploy API Worker a Cloudflare Workers
 # Secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+# Variables: D1 database debe existir (cma-db)
 
 name: Deploy Worker API
 
@@ -21,7 +22,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 9.12.0
 
       - uses: actions/setup-node@v4
         with:
