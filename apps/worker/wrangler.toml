@@ -1,0 +1,16 @@
+name = "cma-api"
+main = "src/index.ts"
+compatibility_date = "2024-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cma-db"
+database_id = "00000000-0000-0000-0000-000000000000" # Reemplazar con ID real
+migrations_dir = "migrations"
+
+[vars]
+ENVIRONMENT = "development"
+ADMIN_API_KEY = "change-me-in-production"
+
+# Rutas estáticas para irn-current.json se sirven desde el frontend (Cloudflare Pages)
