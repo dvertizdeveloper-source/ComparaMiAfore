@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build
+dist/
+build/
+*.local
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+.wrangler/
+.dev.vars
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db
+
+# Logs & coverage
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+coverage/
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+
+# Cloudflare
+.mf/
+.wrangler/
+
+# Misc
+*.pem
+.cache/
+tmp/
+temp/
